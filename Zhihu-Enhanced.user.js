@@ -3,7 +3,7 @@
 // @name:zh-CN   知乎增强
 // @name:zh-TW   知乎增強
 // @name:ru      Улучшение Zhihu
-// @version      2.3.35
+// @version      2.3.36
 // @author       X.I.U
 // @description  A more personalized Zhihu experience~
 // @description:zh-CN  移除登录弹窗、屏蔽指定类别（视频、盐选、文章、想法、关注[赞同/关注了XX]等）、屏蔽低赞/低评、屏蔽用户、屏蔽关键词、默认收起回答、快捷收起回答/评论（左键两侧）、快捷回到顶部（右键两侧）、区分问题文章、移除高亮链接、净化搜索热门、净化标题消息、展开问题描述、显示问题作者、默认高清原图（无水印）、置顶显示时间、完整问题时间、直达问题按钮、默认站外直链...
@@ -465,6 +465,24 @@ function backToTop(selectors) {
             }
         }
     }
+}
+
+
+// 新版 UI 两侧空白兜底：右键空白处回到顶部
+function backToTopBlanks(selectors) {
+    if (window._backToTopBlanks) return
+    window._backToTopBlanks = true
+    document.addEventListener('contextmenu', function(event) {
+        if (!menu_value('menu_backToTop')) return
+        let target = event.target
+        if (!(target instanceof Element)) return
+        if (target.closest('.ContentItem, .Card, .AnswerForm, .Comments-container, header, aside, nav, button, a, input, textarea, select, [contenteditable="true"], .Modal-wrapper')) return
+        let page = document.querySelector(selectors)
+        if (page && target !== page && !page.contains(target)) {
+            event.preventDefault()
+            window.scrollTo(0, 0)
+        }
+    }, true)
 }
 
 
@@ -1753,6 +1771,7 @@ function switchHomeRecommend() {
             if (location.pathname.indexOf('waiting') == -1) {
                 collapsedNowAnswer('.QuestionPage'); //                        收起当前回答 + 快捷返回顶部
                 collapsedNowAnswerBlanks('.QuestionPage'); //                 新版 UI 两侧空白兜底
+                backToTopBlanks('.QuestionPage'); //                          新版 UI 两侧空白右键回到顶部兜底
                 collapsedNowAnswer('.QuestionPage>#AnswerFormPortalContainer+div>div:first-child'); //收起当前回答 + 快捷返回顶部
                 questionRichTextMore(); //                                     展开问题描述
                 if (location.pathname.indexOf('answer') == -1) { //  问题页而不是回答页
@@ -1835,6 +1854,8 @@ function switchHomeRecommend() {
 
             collapsedNowAnswer('.App-main .Topstory'); //                      收起当前回答 + 快捷返回顶部
             collapsedNowAnswer('.App-main .Topstory-container'); //            收起当前回答 + 快捷返回顶部
+            collapsedNowAnswerBlanks('.Topstory'); //                          新版 UI 两侧空白兜底
+            backToTopBlanks('.Topstory'); //                                  新版 UI 两侧空白右键回到顶部兜底
             if (location.pathname !== '/column-square'){ // 不是首页 - 专栏时
                 setInterval(function(){topTime_('.TopstoryItem', 'ContentItem-meta')}, 300); // 置顶显示时间
                 addTypeTips(); //                                                  区分问题文章
