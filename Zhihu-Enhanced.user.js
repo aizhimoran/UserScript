@@ -3,7 +3,7 @@
 // @name:zh-CN   知乎增强
 // @name:zh-TW   知乎增強
 // @name:ru      Улучшение Zhihu
-// @version      2.3.36
+// @version      2.3.37
 // @author       X.I.U
 // @description  A more personalized Zhihu experience~
 // @description:zh-CN  移除登录弹窗、屏蔽指定类别（视频、盐选、文章、想法、关注[赞同/关注了XX]等）、屏蔽低赞/低评、屏蔽用户、屏蔽关键词、默认收起回答、快捷收起回答/评论（左键两侧）、快捷回到顶部（右键两侧）、区分问题文章、移除高亮链接、净化搜索热门、净化标题消息、展开问题描述、显示问题作者、默认高清原图（无水印）、置顶显示时间、完整问题时间、直达问题按钮、默认站外直链...
@@ -437,6 +437,35 @@ function collapsedNowAnswer(selectors) {
 }
 
 
+// 判断点击目标是否落在页面背景上（也就是 #22272e 的区域），
+// 这样两侧空白不论被哪层透明容器包着都能命中
+function isPageBackground(el) {
+    let bodyBg = getComputedStyle(document.body).backgroundColor
+    let node = el
+    while (node && node !== document.documentElement) {
+        let bg = getComputedStyle(node).backgroundColor
+        if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') return bg === bodyBg
+        node = node.parentElement
+    }
+    return true
+}
+
+// 元素自身是否直接包含文字（用于排除标题、正文等，避免选字时误触发）
+function hasOwnText(el) {
+    for (let node of el.childNodes) {
+        if (node.nodeType === 3 && node.textContent.trim()) return true
+    }
+    return false
+}
+
+// 是否是“空白区”：不是控件/正文，也不含文字，且背景是页面底色
+function isBlankArea(target) {
+    if (target.closest('button, a, input, textarea, select, [contenteditable="true"], [role="button"], header, nav, .Modal-wrapper, .RichText, .QuestionRichText, .ContentItem-title, .AuthorInfo, .ContentItem-actions, .CommentContent, .Comments-container, .AnswerForm')) return false
+    if (hasOwnText(target)) return false
+    return isPageBackground(target)
+}
+
+
 // 新版 UI 下 .QuestionPage 只覆盖内容列，两侧空白在它外面，点不到；
 // 这里兜底监听 document，点到空白处时补一次 .QuestionPage 的 click（复用上面的收起逻辑）
 function collapsedNowAnswerBlanks(selectors) {
@@ -446,9 +475,9 @@ function collapsedNowAnswerBlanks(selectors) {
         if (!menu_value('menu_collapsedNowAnswer')) return
         let target = event.target
         if (!(target instanceof Element)) return
-        if (target.closest('.ContentItem, .Card, .AnswerForm, .Comments-container, header, aside, nav, button, a, input, textarea, select, [contenteditable="true"], .Modal-wrapper')) return
+        if (!isBlankArea(target)) return
         let page = document.querySelector(selectors)
-        if (page && target !== page && !page.contains(target)) page.click()
+        if (page && target !== page) page.click()
     }, true)
 }
 
@@ -476,9 +505,9 @@ function backToTopBlanks(selectors) {
         if (!menu_value('menu_backToTop')) return
         let target = event.target
         if (!(target instanceof Element)) return
-        if (target.closest('.ContentItem, .Card, .AnswerForm, .Comments-container, header, aside, nav, button, a, input, textarea, select, [contenteditable="true"], .Modal-wrapper')) return
+        if (!isBlankArea(target)) return
         let page = document.querySelector(selectors)
-        if (page && target !== page && !page.contains(target)) {
+        if (page && target !== page) {
             event.preventDefault()
             window.scrollTo(0, 0)
         }
