@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         知乎美化
-// @version      1.5.24
+// @version      1.5.25
 // @author       X.I.U
 // @description  宽屏显示、暗黑模式（4种）、暗黑模式跟随浏览器、屏蔽首页活动广告、隐藏文章开头大图、调整图片最大高度、向下翻时自动隐藏顶栏
 // @match        *://www.zhihu.com/*
@@ -202,10 +202,10 @@ div[class*="ManuscriptIntro-root-"] {user-select: auto !important;}
 .TopstoryItem--advertCard {display: none !important;}
 /* 屏蔽首页活动广告 */
 main.App-main > .Topstory > div:not(.Topstory-container) {display: none !important;}
-html[data-theme="light"] header.AppHeader {background-color: #ffffff !important; -webkit-box-shadow: 0 1px 3px rgba(18,18,18,.1) !important; box-shadow: 0 1px 3px rgba(18,18,18,.1) !important;}
-html[data-theme="light"] header.AppHeader a[aria-label="知乎"] svg {filter: invert(57%) sepia(71%) saturate(949%) hue-rotate(190deg) brightness(86%) contrast(188%) !important;}
-html[data-theme="light"] .AppHeader-TabsLink {color: #8590a6 !important; font-weight: normal !important;}
-html[data-theme="light"] .AppHeader-userInfo Button svg, .SearchBar-searchButton svg {color: inherit !important;}
+html[data-theme="light"] header.AppHeader, html[data-theme="light"] header.LeanAppHeaderBar {background-color: #ffffff !important; -webkit-box-shadow: 0 1px 3px rgba(18,18,18,.1) !important; box-shadow: 0 1px 3px rgba(18,18,18,.1) !important;}
+html[data-theme="light"] header.AppHeader a[aria-label="知乎"] svg, html[data-theme="light"] header.LeanAppHeaderBar a[aria-label="知乎"] svg {filter: invert(57%) sepia(71%) saturate(949%) hue-rotate(190deg) brightness(86%) contrast(188%) !important;}
+html[data-theme="light"] .AppHeader-TabsLink, html[data-theme="light"] header.LeanAppHeaderBar nav > a:not(.is-active) {color: #8590a6 !important; font-weight: normal !important;}
+html[data-theme="light"] .AppHeader-userInfo Button svg, html[data-theme="light"] .AppHeader-profileEntry svg, .SearchBar-searchButton svg {color: inherit !important;}
 html[data-theme="light"] .AppHeader-userInfo button>div {color: #8590a6 !important;}
 html[data-theme="light"] .Input-wrapper.Input-wrapper--grey {background: #f6f6f6 !important;}
 html[data-theme="light"] .SearchBar input {color: #121212 !important;}
@@ -216,44 +216,56 @@ html[data-theme=light] .AppHeader-notifications:not([aria-label=通知])>div:fir
 
             `,
             style_widescreenDisplayIndex = `/* 宽屏显示 - 首页 */
-.Topstory-mainColumn, .QuestionWaiting-mainColumn {width: inherit !important;}
+.Topstory-mainColumn, .QuestionWaiting-mainColumn {width: 100% !important;}
 .Topstory-mainColumn~div,[data-za-detail-view-path-module="RightSideBar"] {display: none !important;}
-.Topstory-container {width: ${GM_getValue('menu_widescreenDisplayWidth')}px;}
+.Topstory-container {width: ${GM_getValue('menu_widescreenDisplayWidth')}px !important; max-width: 100% !important; margin-left: auto !important; margin-right: auto !important;}
+/* 新版 UI 外层是弹性布局，需要放开主区域并隐藏右侧栏 */
+.App-main {width: 100% !important;}
+div:has(> div > main.App-main) {width: ${GM_getValue('menu_widescreenDisplayWidth')}px !important; max-width: 100% !important; margin-left: auto !important; margin-right: auto !important;}
+div:has(> main.App-main) {width: 100% !important; flex: 1 1 auto !important;}
+div:has(> div > main.App-main) > aside {display: none !important;}
 @media only screen and (max-width: ${Number(GM_getValue('menu_widescreenDisplayWidth'))+50}px) {.Topstory-container {width: 97% !important;}}
 `,
             style_widescreenDisplayQuestion = `/* 宽屏显示 - 问题页 */
 .QuestionWaiting-mainColumn {width: inherit !important;}
 .Question-mainColumn+div,[data-za-detail-view-path-module="RightSideBar"], .Question-sideColumn, .GlobalSideBar {display: none !important;}
 .QuestionWaiting-mainColumn {margin-right: 0 !important;}
-.Question-mainColumn, .ListShortcut {width: ${GM_getValue('menu_widescreenDisplayWidth')}px; margin: auto!important;}
+.Question-mainColumn, .ListShortcut {width: ${GM_getValue('menu_widescreenDisplayWidth')}px !important; max-width: 100% !important; margin: auto !important;}
+/* 新版 UI 的主列外层容器是固定宽度的 flex 子项，需要一并放开 */
+.App-main div:has(> .Question-mainColumn) {width: 100% !important;}
 @media only screen and (max-width: ${Number(GM_getValue('menu_widescreenDisplayWidth'))+50}px) {.Question-mainColumn, .ListShortcut {width: auto !important;}}
 @media only screen and (max-width: ${GM_getValue('menu_widescreenDisplayWidth')-100}px) {.Question-mainColumn, .ListShortcut {width: 98.5% !important;}}
 .AuthorInfo {max-width: 100% !important;}
 `,
             style_widescreenDisplaySearch = `/* 宽屏显示 - 搜索页 */
-.SearchMain, .App-main>[data-za-detail-view-path-module=TopicItem]>div:first-child {width: inherit !important;}
+.SearchMain, .App-main>[data-za-detail-view-path-module=TopicItem]>div:first-child {width: 100% !important;}
 .SearchMain+div,  .App-main>[data-za-detail-view-path-module=TopicItem]>div:not(:first-child) {display: none !important;}
-.Search-container, .App-main>[data-za-detail-view-path-module=TopicItem] {width: ${GM_getValue('menu_widescreenDisplayWidth')}px;}
+.Search-container, .App-main>[data-za-detail-view-path-module=TopicItem] {width: ${GM_getValue('menu_widescreenDisplayWidth')}px !important; max-width: none !important; margin-left: auto !important; margin-right: auto !important;}
+/* 新版 UI 外层是弹性布局，需要放开主区域并隐藏右侧栏 */
+.App-main {width: 100% !important;}
+div:has(> div > main.App-main) {width: ${GM_getValue('menu_widescreenDisplayWidth')}px !important; max-width: 100% !important; margin-left: auto !important; margin-right: auto !important;}
+div:has(> main.App-main) {width: 100% !important; flex: 1 1 auto !important;}
+div:has(> div > main.App-main) > aside {display: none !important;}
 @media only screen and (max-width: ${Number(GM_getValue('menu_widescreenDisplayWidth'))+50}px) {.Search-container, .App-main>[data-za-detail-view-path-module=TopicItem] {width: 97.5% !important;}}
 `,
             style_widescreenDisplayCollection = `/* 宽屏显示 - 收藏页 */
 .CollectionsDetailPage-mainColumn {width: inherit !important;}
 .CollectionsDetailPage-mainColumn+div {display: none !important;}
-.CollectionsDetailPage {width: ${GM_getValue('menu_widescreenDisplayWidth')}px;}
+.CollectionsDetailPage {width: ${GM_getValue('menu_widescreenDisplayWidth')}px !important; max-width: 100% !important; margin-left: auto !important; margin-right: auto !important;}
 @media only screen and (max-width: ${Number(GM_getValue('menu_widescreenDisplayWidth'))+50}px) {.CollectionsDetailPage {width: 98.5% !important;}}
 `,
             style_widescreenDisplayPost = `/* 宽屏显示 - 文章页 */
 .Post-content {min-width: auto !important;}
 .Post-SideActions {left: calc(10vw) !important;}
 .Post-Row-Content-right {display: none !important;}
-.Post-Row-Content, .Post-Row-Content-left, .RichContent-actions {width: ${GM_getValue('menu_widescreenDisplayWidth')}px !important;}
+.Post-Row-Content, .Post-Row-Content-left, .RichContent-actions {width: ${GM_getValue('menu_widescreenDisplayWidth')}px !important; max-width: 100% !important;}
 @media only screen and (max-width: ${Number(GM_getValue('menu_widescreenDisplayWidth'))+50}px) {.Post-Row-Content, .Post-Row-Content-left, .RichContent-actions {width: auto !important;}}
 @media only screen and (max-width: ${GM_getValue('menu_widescreenDisplayWidth')-100}px) {.Post-Row-Content, .Post-Row-Content-left, .RichContent-actions {width: 98% !important;}}
 `,
             style_widescreenDisplayPeople = `/* 宽屏显示 - 用户主页 */
 .Profile-mainColumn {width: inherit !important;}
 .Profile-mainColumn+div,[data-za-module="RightSideBar"],.Profile-sideColumn {display: none !important;}
-.Profile-main, #ProfileHeader {width: ${GM_getValue('menu_widescreenDisplayWidth')}px !important;}
+.Profile-main, #ProfileHeader {width: ${GM_getValue('menu_widescreenDisplayWidth')}px !important; max-width: 100% !important;}
 @media only screen and (max-width: ${Number(GM_getValue('menu_widescreenDisplayWidth'))+50}px) {.Profile-main, #ProfileHeader {width: auto !important;}}
 @media only screen and (max-width: ${GM_getValue('menu_widescreenDisplayWidth')-100}px) {.Profile-main, #ProfileHeader {width: 98.5% !important;}}
 `,
