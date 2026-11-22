@@ -3,7 +3,7 @@
 // @name:zh-CN   知乎增强
 // @name:zh-TW   知乎增強
 // @name:ru      Улучшение Zhihu
-// @version      2.3.32
+// @version      2.3.33
 // @author       X.I.U
 // @description  A more personalized Zhihu experience~
 // @description:zh-CN  移除登录弹窗、屏蔽指定类别（视频、盐选、文章、想法、关注[赞同/关注了XX]等）、屏蔽低赞/低评、屏蔽用户、屏蔽关键词、默认收起回答、快捷收起回答/评论（左键两侧）、快捷回到顶部（右键两侧）、区分问题文章、移除高亮链接、净化搜索热门、净化标题消息、展开问题描述、显示问题作者、默认高清原图（无水印）、置顶显示时间、完整问题时间、直达问题按钮、默认站外直链...
@@ -190,7 +190,7 @@ function getCollapsedAnswerObserver() {
                         if (addedNode.className != 'RichContent-inner') continue
                         if (addedNode.offsetHeight < 400) break
                         //console.log('111',addedNode, addedNode.classList, addedNode.classList.contains('RichContent-inner'), addedNode.offsetHeight, addedNode.textContent.length)
-                        const button = mutation.target.querySelector('.ContentItem-actions.Sticky [data-zop-retract-question]');
+                        const button = mutation.target.querySelector('.ContentItem-actions [data-zop-retract-question]');
                         if (button) {
                             mutation.target.setAttribute('script-collapsed', '');
                             button.click();
@@ -201,7 +201,7 @@ function getCollapsedAnswerObserver() {
                 } else if (mutation.target.tagName === 'DIV' && !mutation.target.style.cssText && !mutation.target.className) {
                     if (mutation.target.parentElement.hasAttribute('script-collapsed')) return
                     //console.log('222',mutation.target, mutation.target.querySelector('.ContentItem-actions.Sticky [data-zop-retract-question]'))
-                    const button = mutation.target.querySelector('.ContentItem-actions.Sticky [data-zop-retract-question]');
+                    const button = mutation.target.querySelector('.ContentItem-actions [data-zop-retract-question]');
                     if (button) {
                         mutation.target.parentElement.setAttribute('script-collapsed', '');
                         button.click();
@@ -268,7 +268,7 @@ function collapsedAnswer() {
                 // 被 getCollapsedAnswerObserver 函数收起过的，固定 [收起] 按钮
                 document.querySelectorAll('[script-collapsed]').forEach(function(scriptCollapsed) {scriptCollapsed.querySelectorAll('.ContentItem-actions [data-zop-retract-question], .ContentItem-actions.Sticky [data-zop-retract-question]').forEach(function(button) {button.click();});})
                 // 被 getCollapsedAnswerObserver 函数收起过的，悬浮 [收起] 按钮（悬浮底部的横栏）
-                document.querySelectorAll('.RichContent:not([script-collapsed]) .ContentItem-actions.Sticky [data-zop-retract-question]').forEach(function(button) {
+                document.querySelectorAll('.RichContent:not([script-collapsed]) .ContentItem-actions [data-zop-retract-question]').forEach(function(button) {
                     let el = button.parentElement;
                     while (!el.classList.contains('RichContent')) {el = el.parentElement;}
                     if (el) el.setAttribute('script-collapsed', '');
@@ -1482,14 +1482,35 @@ function getXpath(xpath, contextNode, doc = document) {
 }
 
 
+// 问题作者/问题时间（新 UI）样式
+function questionMetaStyle() {
+    if (document.getElementById('zhihuE_QuestionMetaStyle')) return
+    let style = document.createElement('style');
+    style.id = 'zhihuE_QuestionMetaStyle';
+    style.textContent = `.QuestionAuthor-xiu {display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: 14px; line-height: 22px; color: var(--GBK03A, #9098ac);}
+.QuestionAuthor-xiu img {width: 20px; height: 20px; border-radius: 50%;}
+.QuestionAuthor-xiu a {color: var(--GBK02A, #121212); font-weight: 500;}
+.QuestionTime-xiu {margin: 6px 0 0; font-size: 13px; line-height: 20px; color: var(--GBK03A, #9098ac); font-style: italic;}
+[data-theme=dark] .QuestionAuthor-xiu a {color: #adbac7;}`;
+    document.head.appendChild(style);
+}
+
+
 // 显示问题作者
 function question_author() {
-    if (document.querySelector('.BrandQuestionSymbol, .QuestionAuthor, .SpecialQuestionAuthor')) return
-    let qJson = JSON.parse(document.querySelector('#js-initialData').textContent).initialState.entities.questions[/\d+/.exec(location.pathname)[0]].author,
-        html = `<div class="BrandQuestionSymbol"><a class="BrandQuestionSymbol-brandLink" href="/people/${qJson.urlToken}"><img role="presentation" src="${qJson.avatarUrl}" class="BrandQuestionSymbol-logo" alt=""><span class="BrandQuestionSymbol-name">${qJson.name}</span></a><div class="BrandQuestionSymbol-divider" style="margin-left: 5px;margin-right: 10px;"></div></div>`;
-        //html = `<div class="QuestionAuthor"><div class="AuthorInfo AuthorInfo--plain" itemprop="author" itemscope="" itemtype="http://schema.org/Person"><div class="AuthorInfo"><span class="UserLink AuthorInfo-avatarWrapper"><div class="Popover"><div id="Popover18-toggle" aria-haspopup="true" aria-expanded="false" aria-owns="Popover18-content"><a class="UserLink-link" data-za-detail-view-element_name="User" target="_blank" href="${qJson.urlToken}"><img class="Avatar AuthorInfo-avatar" width="24" height="24" src="${qJson.avatarUrl}"></a></div></div></span><div class="AuthorInfo-content"><div class="AuthorInfo-head"><span class="UserLink AuthorInfo-name"><div class="Popover"><div id="Popover19-toggle" aria-haspopup="true" aria-expanded="false" aria-owns="Popover19-content"><a class="UserLink-link" data-za-detail-view-element_name="User" target="_blank" href="${qJson.urlToken}">${qJson.name}</a></div></div></span></div></div></div></div></div>`
-    document.querySelector('.QuestionHeader-topics').insertAdjacentHTML('beforebegin', html);
-    //document.querySelector('.QuestionPage h1.QuestionHeader-title').insertAdjacentHTML('afterend', html);
+    if (document.querySelector('.BrandQuestionSymbol, .QuestionAuthor, .SpecialQuestionAuthor, .QuestionAuthor-xiu')) return
+    let qid = /\d+/.exec(location.pathname), data;
+    if (!qid) return
+    try { data = JSON.parse(document.querySelector('#js-initialData').textContent).initialState.entities.questions[qid[0]]; } catch (e) { return }
+    let qJson = data && data.author; if (!qJson || !qJson.urlToken) return
+    let html = `<div class="BrandQuestionSymbol QuestionAuthor-xiu"><a class="BrandQuestionSymbol-brandLink" href="/people/${qJson.urlToken}"><img role="presentation" src="${qJson.avatarUrl}" class="BrandQuestionSymbol-logo" alt=""><span class="BrandQuestionSymbol-name">${qJson.name}</span></a><div class="BrandQuestionSymbol-divider" style="margin-left: 5px;margin-right: 10px;"></div></div>`;
+    // 旧版 UI：插入到话题上方
+    let topics = document.querySelector('.QuestionHeader-topics');
+    if (topics) { questionMetaStyle(); topics.insertAdjacentHTML('beforebegin', html); return }
+    // 新版 UI：接在问题标题下方
+    let h1 = document.querySelector('.QuestionPage h1'); if (!h1) return
+    questionMetaStyle();
+    h1.insertAdjacentHTML('afterend', html);
 }
 
 
@@ -1555,9 +1576,18 @@ function topTime_publishTop(t, _this, _class) {
 
 // 问题创建时间
 function question_time() {
-    if (!(document.querySelector('.QuestionPage .QuestionHeader-side .QuestionTime-xiu'))) {
-        document.querySelector('.QuestionPage .QuestionHeader-side').insertAdjacentHTML('beforeEnd', '<div class="QuestionTime-xiu" style="color: #9098ac; margin-top: 5px; font-size: 13px; font-style: italic;"><p>创建时间：' + getUTC8(new Date(document.querySelector('.QuestionPage > meta[itemprop=dateCreated]').content)) + '</p><p>最后编辑：' + getUTC8(new Date(document.querySelector('.QuestionPage > meta[itemprop=dateModified]').content)) + '</p></div>');
-    }
+    if (document.querySelector('.QuestionTime-xiu')) return
+    let created = document.querySelector('.QuestionPage > meta[itemprop=dateCreated]'),
+        modified = document.querySelector('.QuestionPage > meta[itemprop=dateModified]');
+    if (!created || !modified) return
+    let html = '<div class="QuestionTime-xiu">创建时间：' + getUTC8(new Date(created.content)) + ' · 最后编辑：' + getUTC8(new Date(modified.content)) + '</div>';
+    // 旧版 UI：插入到问题头部右侧
+    let side = document.querySelector('.QuestionPage .QuestionHeader-side');
+    if (side) { questionMetaStyle(); side.insertAdjacentHTML('beforeEnd', html); return }
+    // 新版 UI：接在问题标题下方
+    let h1 = document.querySelector('.QuestionPage h1'); if (!h1) return
+    questionMetaStyle();
+    h1.insertAdjacentHTML('afterend', html);
 }
 
 
